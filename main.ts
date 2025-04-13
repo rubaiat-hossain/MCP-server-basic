@@ -86,4 +86,4 @@ app.post("/messages", (req, res) => {
 });
 
 app.listen(3000);
-console.log("Weather MCP Server running at http://localhost:3000/sse");
+console.log("MCP Server running at http://localhost:3000/sse");
