@@ -3,21 +3,72 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse";
 import express from "express";
 import { z } from "zod";
 
+// Retry + timeout fetch
+async function fetchWithRetry(url: string, retries = 3, timeout = 5000): Promise<any> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error(`Fetch error: ${res.status} ${res.statusText}`);
+      return await res.json();
+    } catch (err) {
+      clearTimeout(timer);
+      if (attempt === retries) throw err;
+      console.warn(`[Retry] Attempt ${attempt} failed. Retrying...`);
+      await new Promise((r) => setTimeout(r, 1000)); // wait before retrying
+    }
+  }
+  throw new Error("Failed after retries");
+}
+
 const server = new McpServer({
-  name: "My Super Cool Thursday MCP Demo Server",
+  name: "Weather Info MCP Server",
   version: "1.0.0",
 });
 
-server.tool("getRandomDogImage", { breed: z.string() }, async ({ breed }) => {
-  const response = await fetch(
-    `https://dog.ceo/api/breed/${breed}/images/random`,
-  );
-  const data = await response.json();
-  return {
-    content: [
-      { type: "text", text: `Your dog image is here: ${data.message}` },
-    ],
-  };
+server.tool("getCityTemperature", { city: z.string() }, async ({ city }) => {
+  console.log(`[MCP] Tool called with city: ${city}`);
+
+  try {
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1`;
+    const geoData = await fetchWithRetry(geoUrl);
+    console.log(`[MCP] Geocode response:`, geoData);
+
+    if (!geoData.results || geoData.results.length === 0) {
+      throw new Error(`City "${city}" not found.`);
+    }
+
+    const { latitude: lat, longitude: lon } = geoData.results[0];
+
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    const weatherData = await fetchWithRetry(weatherUrl);
+    console.log(`[MCP] Weather response:`, weatherData);
+
+    const temperature = weatherData.current_weather?.temperature;
+
+    if (temperature === undefined) {
+      throw new Error("Temperature data missing from weather response.");
+    }
+
+    return {
+      content: [
+        { type: "text", text: `The current temperature in ${city} is ${temperature}°C.` },
+      ],
+    };
+  } catch (err: any) {
+    console.error(`[MCP] Error getting weather:`, err);
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Failed to fetch temperature for ${city}: ${err.message || err}`,
+        },
+      ],
+    };
+  }
 });
 
 const app = express();
@@ -35,4 +86,4 @@ app.post("/messages", (req, res) => {
 });
 
 app.listen(3000);
-console.log("Server is running on http://localhost:3000/sse");
+console.log("Weather MCP Server running at http://localhost:3000/sse");
