@@ -63,13 +63,28 @@ server.tool("getCityTemperature", { city: z.string() }, async ({ city }) => {
       throw new Error("Temperature data missing from weather response.");
     }
 
+    // Get additional insights using Groq
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { 
+          role: "user", 
+          content: `The current temperature in ${city} is ${temperature}°C. 
+          Please provide a brief, one-sentence insight about what this means for the weather in ${city}.`
+        }
+      ],
+      model: "deepseek-r1-distill-qwen-32b",
+      temperature: 0.7,
+    });
+
+    const insight = completion.choices[0].message.content || "";
+
     return {
       content: [
-        { type: "text", text: `The current temperature in ${city} is ${temperature}°C.` },
+        { type: "text", text: `The current temperature in ${city} is ${temperature}°C.\n${insight}` },
       ],
     };
   } catch (err: any) {
-    console.error(`[MCP] Error getting weather:`, err);
+    console.error(`[MCP] Error:`, err);
     return {
       content: [
         {
