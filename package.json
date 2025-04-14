@@ -8,15 +8,26 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "A step-by-step demo tutorial showcasing how to use the new MCP (Message Control Protocol) feature to add powerful tool extensions to your AI agents.",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
     "express": "^5.1.0",
+    "groq": "^3.84.0",
+    "groq-sdk": "^0.19.0",
+    "openai": "^4.93.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rubaiat-hossain/MCP-server-experiments.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rubaiat-hossain/MCP-server-experiments/issues"
+  },
+  "homepage": "https://github.com/rubaiat-hossain/MCP-server-experiments#readme"
 }
