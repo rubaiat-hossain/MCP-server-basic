@@ -72,7 +72,7 @@ server.tool("getCityTemperature", { city: z.string() }, async ({ city }) => {
           Please provide a brief, one-sentence insight about what this means for the weather in ${city}.`
         }
       ],
-      model: "deepseek-r1-distill-qwen-32b",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       temperature: 0.7,
     });
 
@@ -100,7 +100,7 @@ server.tool("testGroq", { message: z.string().optional() }, async ({ message }) 
   try {
     const completion = await groq.chat.completions.create({
       messages: [{ role: "user", content: message || "Say hello!" }],
-      model: "deepseek-r1-distill-qwen-32b",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       temperature: 0.7,
     });
 
